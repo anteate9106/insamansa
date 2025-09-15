@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>로그인 - 청년 성격유형검사</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .login-container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+            width: 100%;
+            max-width: 400px;
+            position: relative;
+        }
+
+        .login-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px 30px;
+            text-align: center;
+        }
+
+        .login-header h1 {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+
+        .login-header p {
+            opacity: 0.9;
+            font-size: 1rem;
+        }
+
+        .login-form {
+            padding: 40px 30px;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+            font-size: 14px;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            background: #f8f9fa;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .form-group input::placeholder {
+            color: #adb5bd;
+        }
+
+        .user-type-selector {
+            display: flex;
+            margin-bottom: 25px;
+            border-radius: 10px;
+            overflow: hidden;
+            border: 2px solid #e9ecef;
+        }
+
+        .user-type-option {
+            flex: 1;
+            padding: 12px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: #f8f9fa;
+            color: #666;
+            font-weight: 600;
+        }
+
+        .user-type-option.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 20px;
+        }
+
+        .login-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .login-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .divider {
+            text-align: center;
+            margin: 20px 0;
+            position: relative;
+            color: #adb5bd;
+        }
+
+        .divider::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: #e9ecef;
+        }
+
+        .divider span {
+            background: white;
+            padding: 0 15px;
+            font-size: 14px;
+        }
+
+        .signup-btn {
+            width: 100%;
+            padding: 15px;
+            background: transparent;
+            color: #667eea;
+            border: 2px solid #667eea;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 15px;
+        }
+
+        .signup-btn:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        .forgot-password {
+            text-align: center;
+            margin-top: 15px;
+        }
+
+        .forgot-password a {
+            color: #667eea;
+            text-decoration: none;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .forgot-password a:hover {
+            text-decoration: underline;
+        }
+
+        .back-to-home {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            font-size: 14px;
+        }
+
+        .back-to-home:hover {
+            background: rgba(255,255,255,0.3);
+            transform: translateY(-2px);
+        }
+
+        /* 알림 */
+        .alert {
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .alert-info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        /* 로딩 스피너 */
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* 모달 */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+        }
+
+        .modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            max-width: 400px;
+            width: 90%;
+            text-align: center;
+        }
+
+        .modal-header {
+            margin-bottom: 20px;
+        }
+
+        .modal-header h3 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .modal-header p {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .modal-btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .modal-btn.primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .modal-btn.secondary {
+            background: #e9ecef;
+            color: #666;
+        }
+
+        .modal-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        /* 반응형 */
+        @media (max-width: 480px) {
+            .login-container {
+                margin: 10px;
+                border-radius: 15px;
+            }
+
+            .login-header {
+                padding: 30px 20px;
+            }
+
+            .login-header h1 {
+                font-size: 1.5rem;
+            }
+
+            .login-form {
+                padding: 30px 20px;
+            }
+
+            .form-group input {
+                padding: 12px;
+                font-size: 14px;
+            }
+
+            .login-btn, .signup-btn {
+                padding: 12px;
+                font-size: 14px;
+            }
+        }
+
+        /* 애니메이션 */
+        .login-container {
+            animation: slideUp 0.5s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <a href="index.html" class="back-to-home">🏠 홈으로</a>
+        
+        <div class="login-header">
+            <h1>🔐 로그인</h1>
+            <p>청년 성격유형검사에 오신 것을 환영합니다</p>
+        </div>
+
+        <div class="login-form">
+            <!-- 알림 메시지 -->
+            <div id="alert-container"></div>
+
+            <!-- 로딩 스피너 -->
+            <div id="loading" class="loading">
+                <div class="spinner"></div>
+                <p>로그인 중...</p>
+            </div>
+
+            <!-- 사용자 유형 선택 -->
+            <div class="user-type-selector">
+                <div class="user-type-option active" onclick="selectUserType('user')">
+                    👤 일반 사용자
+                </div>
+                <div class="user-type-option" onclick="selectUserType('admin')">
+                    🔧 관리자
+                </div>
+            </div>
+
+            <!-- 로그인 폼 -->
+            <form id="login-form">
+                <div class="form-group">
+                    <label for="email">이메일</label>
+                    <input type="email" id="email" placeholder="이메일을 입력하세요" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="password">비밀번호</label>
+                    <input type="password" id="password" placeholder="비밀번호를 입력하세요" required>
+                </div>
+
+                <button type="submit" class="login-btn" id="login-btn">
+                    로그인
+                </button>
+            </form>
+
+            <div class="divider">
+                <span>또는</span>
+            </div>
+
+            <button class="signup-btn" onclick="openSignupModal()">
+                회원가입
+            </button>
+
+            <div class="forgot-password">
+                <a href="#" onclick="openForgotPasswordModal()">비밀번호를 잊으셨나요?</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- 회원가입 모달 -->
+    <div id="signup-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>📝 회원가입</h3>
+                <p>새로운 계정을 만들어보세요</p>
+            </div>
+            <form id="signup-form">
+                <div class="form-group">
+                    <label for="signup-name">이름</label>
+                    <input type="text" id="signup-name" placeholder="이름을 입력하세요" required>
+                </div>
+                <div class="form-group">
+                    <label for="signup-email">이메일</label>
+                    <input type="email" id="signup-email" placeholder="이메일을 입력하세요" required>
+                </div>
+                <div class="form-group">
+                    <label for="signup-password">비밀번호</label>
+                    <input type="password" id="signup-password" placeholder="비밀번호를 입력하세요" required>
+                </div>
+                <div class="form-group">
+                    <label for="signup-confirm-password">비밀번호 확인</label>
+                    <input type="password" id="signup-confirm-password" placeholder="비밀번호를 다시 입력하세요" required>
+                </div>
+                <div class="modal-buttons">
+                    <button type="button" class="modal-btn secondary" onclick="closeSignupModal()">취소</button>
+                    <button type="submit" class="modal-btn primary">가입하기</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 비밀번호 찾기 모달 -->
+    <div id="forgot-password-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>🔑 비밀번호 찾기</h3>
+                <p>가입하신 이메일로 비밀번호 재설정 링크를 보내드립니다</p>
+            </div>
+            <form id="forgot-password-form">
+                <div class="form-group">
+                    <label for="forgot-email">이메일</label>
+                    <input type="email" id="forgot-email" placeholder="가입하신 이메일을 입력하세요" required>
+                </div>
+                <div class="modal-buttons">
+                    <button type="button" class="modal-btn secondary" onclick="closeForgotPasswordModal()">취소</button>
+                    <button type="submit" class="modal-btn primary">링크 보내기</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // 현재 사용자 유형
+        let currentUserType = 'user';
+
+        // 페이지 로드 시 초기화
+        document.addEventListener('DOMContentLoaded', function() {
+            // 저장된 로그인 정보 확인
+            checkStoredLogin();
+            
+            // 폼 이벤트 리스너 등록
+            setupEventListeners();
+            
+            console.log('로그인 페이지가 로드되었습니다.');
+        });
+
+        // 사용자 유형 선택
+        function selectUserType(type) {
+            currentUserType = type;
+            
+            // 시각적 피드백
+            document.querySelectorAll('.user-type-option').forEach(option => {
+                option.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            // 로그인 버튼 텍스트 변경
+            const loginBtn = document.getElementById('login-btn');
+            if (type === 'admin') {
+                loginBtn.textContent = '관리자 로그인';
+            } else {
+                loginBtn.textContent = '로그인';
+            }
+        }
+
+        // 이벤트 리스너 설정
+        function setupEventListeners() {
+            // 로그인 폼 제출
+            document.getElementById('login-form').addEventListener('submit', handleLogin);
+            
+            // 회원가입 폼 제출
+            document.getElementById('signup-form').addEventListener('submit', handleSignup);
+            
+            // 비밀번호 찾기 폼 제출
+            document.getElementById('forgot-password-form').addEventListener('submit', handleForgotPassword);
+        }
+
+        // 저장된 로그인 정보 확인
+        function checkStoredLogin() {
+            const storedUser = localStorage.getItem('current_user');
+            const storedAdmin = localStorage.getItem('admin_token');
+            
+            if (storedUser) {
+                showAlert('이미 로그인되어 있습니다. 메인 페이지로 이동합니다.', 'info');
+                setTimeout(() => {
+                    window.location.href = 'index.html';
+                }, 2000);
+            } else if (storedAdmin) {
+                showAlert('관리자로 로그인되어 있습니다. 관리자 페이지로 이동합니다.', 'info');
+                setTimeout(() => {
+                    window.location.href = 'admin.html';
+                }, 2000);
+            }
+        }
+
+        // 로그인 처리
+        async function handleLogin(e) {
+            e.preventDefault();
+            
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            if (!email || !password) {
+                showAlert('이메일과 비밀번호를 모두 입력해주세요.', 'error');
+                return;
+            }
+            
+            try {
+                showLoading(true);
+                
+                // 실제 구현에서는 Supabase 인증 사용
+                const result = await authenticateUser(email, password, currentUserType);
+                
+                if (result.success) {
+                    showAlert('로그인에 성공했습니다!', 'success');
+                    
+                    // 로그인 정보 저장
+                    if (currentUserType === 'admin') {
+                        localStorage.setItem('admin_token', result.token);
+                        localStorage.setItem('admin_user', JSON.stringify(result.user));
+                        setTimeout(() => {
+                            window.location.href = 'admin.html';
+                        }, 1500);
+                    } else {
+                        localStorage.setItem('current_user', JSON.stringify(result.user));
+                        localStorage.setItem('user_token', result.token);
+                        setTimeout(() => {
+                            window.location.href = 'index.html';
+                        }, 1500);
+                    }
+                } else {
+                    showAlert(result.message || '로그인에 실패했습니다.', 'error');
+                }
+                
+            } catch (error) {
+                console.error('로그인 오류:', error);
+                showAlert('로그인 중 오류가 발생했습니다.', 'error');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        // 사용자 인증 (Supabase 연동)
+        async function authenticateUser(email, password, userType) {
+            // 실제 구현에서는 Supabase Auth 사용
+            // 여기서는 데모용 더미 데이터 사용
+            
+            const demoUsers = {
+                'user@example.com': { password: 'user123', type: 'user', name: '김철수' },
+                'admin@example.com': { password: 'admin123', type: 'admin', name: '관리자' }
+            };
+            
+            const user = demoUsers[email];
+            
+            if (user && user.password === password && user.type === userType) {
+                return {
+                    success: true,
+                    token: 'demo_token_' + Date.now(),
+                    user: { email, name: user.name, type: userType }
+                };
+            } else {
+                return {
+                    success: false,
+                    message: '이메일 또는 비밀번호가 올바르지 않습니다.'
+                };
+            }
+        }
+
+        // 회원가입 모달 열기
+        function openSignupModal() {
+            document.getElementById('signup-modal').classList.add('active');
+        }
+
+        // 회원가입 모달 닫기
+        function closeSignupModal() {
+            document.getElementById('signup-modal').classList.remove('active');
+            document.getElementById('signup-form').reset();
+        }
+
+        // 회원가입 처리
+        async function handleSignup(e) {
+            e.preventDefault();
+            
+            const name = document.getElementById('signup-name').value;
+            const email = document.getElementById('signup-email').value;
+            const password = document.getElementById('signup-password').value;
+            const confirmPassword = document.getElementById('signup-confirm-password').value;
+            
+            if (!name || !email || !password || !confirmPassword) {
+                showAlert('모든 필드를 입력해주세요.', 'error');
+                return;
+            }
+            
+            if (password !== confirmPassword) {
+                showAlert('비밀번호가 일치하지 않습니다.', 'error');
+                return;
+            }
+            
+            if (password.length < 6) {
+                showAlert('비밀번호는 6자 이상이어야 합니다.', 'error');
+                return;
+            }
+            
+            try {
+                showLoading(true);
+                
+                // 실제 구현에서는 Supabase Auth 사용
+                const result = await createUser(name, email, password);
+                
+                if (result.success) {
+                    showAlert('회원가입이 완료되었습니다! 로그인해주세요.', 'success');
+                    closeSignupModal();
+                    
+                    // 회원가입된 이메일을 로그인 폼에 자동 입력
+                    document.getElementById('email').value = email;
+                } else {
+                    showAlert(result.message || '회원가입에 실패했습니다.', 'error');
+                }
+                
+            } catch (error) {
+                console.error('회원가입 오류:', error);
+                showAlert('회원가입 중 오류가 발생했습니다.', 'error');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        // 사용자 생성 (Supabase 연동)
+        async function createUser(name, email, password) {
+            // 실제 구현에서는 Supabase Auth 사용
+            // 여기서는 데모용 더미 응답
+            
+            return {
+                success: true,
+                message: '회원가입이 완료되었습니다.'
+            };
+        }
+
+        // 비밀번호 찾기 모달 열기
+        function openForgotPasswordModal() {
+            document.getElementById('forgot-password-modal').classList.add('active');
+        }
+
+        // 비밀번호 찾기 모달 닫기
+        function closeForgotPasswordModal() {
+            document.getElementById('forgot-password-modal').classList.remove('active');
+            document.getElementById('forgot-password-form').reset();
+        }
+
+        // 비밀번호 찾기 처리
+        async function handleForgotPassword(e) {
+            e.preventDefault();
+            
+            const email = document.getElementById('forgot-email').value;
+            
+            if (!email) {
+                showAlert('이메일을 입력해주세요.', 'error');
+                return;
+            }
+            
+            try {
+                showLoading(true);
+                
+                // 실제 구현에서는 Supabase Auth 사용
+                const result = await sendPasswordReset(email);
+                
+                if (result.success) {
+                    showAlert('비밀번호 재설정 링크가 이메일로 전송되었습니다.', 'success');
+                    closeForgotPasswordModal();
+                } else {
+                    showAlert(result.message || '이메일 전송에 실패했습니다.', 'error');
+                }
+                
+            } catch (error) {
+                console.error('비밀번호 찾기 오류:', error);
+                showAlert('비밀번호 찾기 중 오류가 발생했습니다.', 'error');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        // 비밀번호 재설정 이메일 전송 (Supabase 연동)
+        async function sendPasswordReset(email) {
+            // 실제 구현에서는 Supabase Auth 사용
+            // 여기서는 데모용 더미 응답
+            
+            return {
+                success: true,
+                message: '비밀번호 재설정 링크가 전송되었습니다.'
+            };
+        }
+
+        // 알림 표시
+        function showAlert(message, type) {
+            const alertContainer = document.getElementById('alert-container');
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type}`;
+            alertDiv.textContent = message;
+            
+            alertContainer.innerHTML = '';
+            alertContainer.appendChild(alertDiv);
+            
+            setTimeout(() => {
+                alertDiv.remove();
+            }, 5000);
+        }
+
+        // 로딩 표시
+        function showLoading(show) {
+            document.getElementById('loading').style.display = show ? 'block' : 'none';
+        }
+
+        // 데모 계정 정보 표시
+        function showDemoAccounts() {
+            showAlert('데모 계정: user@example.com (비밀번호: user123) 또는 admin@example.com (비밀번호: admin123)', 'info');
+        }
+
+        // 페이지 로드 시 데모 계정 정보 표시
+        setTimeout(() => {
+            showDemoAccounts();
+        }, 1000);
+    </script>
+</body>
+</html>

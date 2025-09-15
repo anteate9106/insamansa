@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>관리자 페이지 - 청년 성격유형검사</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .admin-container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* 사이드바 */
+        .sidebar {
+            width: 250px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px 0;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+        }
+
+        .sidebar-header {
+            padding: 0 20px 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.2);
+            margin-bottom: 20px;
+        }
+
+        .sidebar-header h2 {
+            font-size: 1.5rem;
+            margin-bottom: 5px;
+        }
+
+        .sidebar-header p {
+            opacity: 0.8;
+            font-size: 0.9rem;
+        }
+
+        .nav-menu {
+            list-style: none;
+        }
+
+        .nav-item {
+            margin-bottom: 5px;
+        }
+
+        .nav-link {
+            display: block;
+            padding: 15px 20px;
+            color: white;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .nav-link:hover, .nav-link.active {
+            background: rgba(255,255,255,0.1);
+            border-right: 3px solid white;
+        }
+
+        /* 메인 콘텐츠 */
+        .main-content {
+            flex: 1;
+            margin-left: 250px;
+            padding: 20px;
+        }
+
+        .content-header {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        .content-header h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .content-header p {
+            color: #666;
+        }
+
+        /* 콘텐츠 섹션 */
+        .content-section {
+            display: none;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 20px;
+        }
+
+        .content-section.active {
+            display: block;
+        }
+
+        /* 통계 카드 */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .stat-card h3 {
+            font-size: 2rem;
+            margin-bottom: 5px;
+        }
+
+        .stat-card p {
+            opacity: 0.9;
+        }
+
+        /* 테이블 */
+        .table-container {
+            overflow-x: auto;
+            margin-bottom: 20px;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+        }
+
+        .data-table th,
+        .data-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+
+        .data-table th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .data-table tr:hover {
+            background: #f8f9fa;
+        }
+
+        /* 버튼 */
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+            margin: 5px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-warning {
+            background: #ffc107;
+            color: #333;
+        }
+
+        .btn-sm {
+            padding: 5px 10px;
+            font-size: 12px;
+        }
+
+        /* 검색 및 필터 */
+        .search-container {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            align-items: center;
+        }
+
+        .search-input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+
+        .filter-select {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background: white;
+        }
+
+        /* 알림 */
+        .alert {
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        /* 반응형 */
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 100%;
+                height: auto;
+                position: relative;
+            }
+
+            .main-content {
+                margin-left: 0;
+            }
+
+            .search-container {
+                flex-direction: column;
+            }
+        }
+
+        /* 상태 배지 */
+        .badge {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .badge-success {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .badge-warning {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .badge-danger {
+            background: #f8d7da;
+            color: #721c24;
+        }
+    </style>
+</head>
+<body>
+    <div class="admin-container">
+        <!-- 사이드바 -->
+        <nav class="sidebar">
+            <div class="sidebar-header">
+                <h2>🔧 관리자</h2>
+                <p>청년 성격유형검사</p>
+            </div>
+            <ul class="nav-menu">
+                <li class="nav-item">
+                    <a class="nav-link active" onclick="showSection('dashboard')">
+                        📊 대시보드
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" onclick="showSection('users')">
+                        👥 사용자 관리
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" onclick="showSection('disc-questions')">
+                        ❓ DiSC 문제 관리
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" onclick="showSection('mbti-questions')">
+                        ❓ MBTI 문제 관리
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" onclick="showSection('stress-questions')">
+                        ❓ 스트레스 문제 관리
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" onclick="showSection('results')">
+                        📈 검사 결과
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" onclick="logout()">
+                        🚪 로그아웃
+                    </a>
+                </li>
+            </ul>
+        </nav>
+
+        <!-- 메인 콘텐츠 -->
+        <main class="main-content">
+            <!-- 대시보드 -->
+            <div id="dashboard" class="content-section active">
+                <div class="content-header">
+                    <h1>📊 대시보드</h1>
+                    <p>전체 시스템 현황을 한눈에 확인하세요</p>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <h3 id="total-users">1,250</h3>
+                        <p>총 사용자 수</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3 id="total-tests">3,420</h3>
+                        <p>총 검사 완료 수</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3 id="today-tests">45</h3>
+                        <p>오늘 검사 수</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3 id="active-users">890</h3>
+                        <p>활성 사용자</p>
+                    </div>
+                </div>
+
+                <div class="content-section">
+                    <h3>최근 검사 결과</h3>
+                    <div class="table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>사용자</th>
+                                    <th>검사 유형</th>
+                                    <th>결과</th>
+                                    <th>검사 일시</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>김철수</td>
+                                    <td><span class="badge badge-success">DiSC</span></td>
+                                    <td>영향형</td>
+                                    <td>2024-01-15</td>
+                                </tr>
+                                <tr>
+                                    <td>이영희</td>
+                                    <td><span class="badge badge-success">MBTI</span></td>
+                                    <td>ENFP</td>
+                                    <td>2024-01-15</td>
+                                </tr>
+                                <tr>
+                                    <td>박민수</td>
+                                    <td><span class="badge badge-success">스트레스</span></td>
+                                    <td>보통</td>
+                                    <td>2024-01-14</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 사용자 관리 -->
+            <div id="users" class="content-section">
+                <div class="content-header">
+                    <h1>👥 사용자 관리</h1>
+                    <p>사용자 정보를 관리하고 검사 이력을 확인하세요</p>
+                </div>
+
+                <div class="search-container">
+                    <input type="text" class="search-input" placeholder="사용자 검색...">
+                    <select class="filter-select">
+                        <option value="">전체 사용자</option>
+                        <option value="active">활성 사용자</option>
+                        <option value="inactive">비활성 사용자</option>
+                    </select>
+                    <button class="btn btn-primary">🔍 검색</button>
+                </div>
+
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>이름</th>
+                                <th>이메일</th>
+                                <th>가입일</th>
+                                <th>검사 횟수</th>
+                                <th>상태</th>
+                                <th>관리</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>1</td>
+                                <td>김철수</td>
+                                <td>kim@example.com</td>
+                                <td>2024-01-01</td>
+                                <td>3</td>
+                                <td><span class="badge badge-success">활성</span></td>
+                                <td>
+                                    <button class="btn btn-primary btn-sm">보기</button>
+                                    <button class="btn btn-warning btn-sm">수정</button>
+                                    <button class="btn btn-danger btn-sm">삭제</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>2</td>
+                                <td>이영희</td>
+                                <td>lee@example.com</td>
+                                <td>2024-01-02</td>
+                                <td>1</td>
+                                <td><span class="badge badge-success">활성</span></td>
+                                <td>
+                                    <button class="btn btn-primary btn-sm">보기</button>
+                                    <button class="btn btn-warning btn-sm">수정</button>
+                                    <button class="btn btn-danger btn-sm">삭제</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>3</td>
+                                <td>박민수</td>
+                                <td>park@example.com</td>
+                                <td>2024-01-03</td>
+                                <td>2</td>
+                                <td><span class="badge badge-warning">비활성</span></td>
+                                <td>
+                                    <button class="btn btn-primary btn-sm">보기</button>
+                                    <button class="btn btn-warning btn-sm">수정</button>
+                                    <button class="btn btn-danger btn-sm">삭제</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- DiSC 문제 관리 -->
+            <div id="disc-questions" class="content-section">
+                <div class="content-header">
+                    <h1>❓ DiSC 문제 관리</h1>
+                    <p>DiSC 성격유형검사 문제를 추가, 수정, 삭제하세요</p>
+                </div>
+
+                <div style="margin-bottom: 20px;">
+                    <button class="btn btn-primary">➕ 문제 추가</button>
+                    <button class="btn btn-warning">🔄 새로고침</button>
+                </div>
+
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>번호</th>
+                                <th>문제</th>
+                                <th>옵션 수</th>
+                                <th>생성일</th>
+                                <th>관리</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>1</td>
+                                <td>새로운 프로젝트를 시작할 때 나는...</td>
+                                <td>4개</td>
+                                <td>2024-01-01</td>
+                                <td>
+                                    <button class="btn btn-primary btn-sm">보기</button>
+                                    <button class="btn btn-warning btn-sm">수정</button>
+                                    <button class="btn btn-danger btn-sm">삭제</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>2</td>
+                                <td>갈등 상황에서 나는...</td>
+                                <td>4개</td>
+                                <td>2024-01-01</td>
+                                <td>
+                                    <button class="btn btn-primary btn-sm">보기</button>
+                                    <button class="btn btn-warning btn-sm">수정</button>
+                                    <button class="btn btn-danger btn-sm">삭제</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- MBTI 문제 관리 -->
+            <div id="mbti-questions" class="content-section">
+                <div class="content-header">
+                    <h1>❓ MBTI 문제 관리</h1>
+                    <p>MBTI 성격유형검사 문제를 추가, 수정, 삭제하세요</p>
+                </div>
+
+                <div style="margin-bottom: 20px;">
+                    <button class="btn btn-primary">➕ 문제 추가</button>
+                    <button class="btn btn-warning">🔄 새로고침</button>
+                </div>
+
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>번호</th>
+                                <th>문제</th>
+                                <th>옵션 수</th>
+                                <th>생성일</th>
+                                <th>관리</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>1</td>
+                                <td>에너지를 얻는 방식은?</td>
+                                <td>2개</td>
+                                <td>2024-01-01</td>
+                                <td>
+                                    <button class="btn btn-primary btn-sm">보기</button>
+                                    <button class="btn btn-warning btn-sm">수정</button>
+                                    <button class="btn btn-danger btn-sm">삭제</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>2</td>
+                                <td>정보를 받아들이는 방식은?</td>
+                                <td>2개</td>
+                                <td>2024-01-01</td>
+                                <td>
+                                    <button class="btn btn-primary btn-sm">보기</button>
+                                    <button class="btn btn-warning btn-sm">수정</button>
+                                    <button class="btn btn-danger btn-sm">삭제</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 스트레스 문제 관리 -->
+            <div id="stress-questions" class="content-section">
+                <div class="content-header">
+                    <h1>❓ 스트레스 문제 관리</h1>
+                    <p>스트레스 관리 척도 문제를 추가, 수정, 삭제하세요</p>
+                </div>
+
+                <div style="margin-bottom: 20px;">
+                    <button class="btn btn-primary">➕ 문제 추가</button>
+                    <button class="btn btn-warning">🔄 새로고침</button>
+                </div>
+
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>번호</th>
+                                <th>문제</th>
+                                <th>옵션 수</th>
+                                <th>생성일</th>
+                                <th>관리</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>1</td>
+                                <td>최근 스트레스를 받는 상황이 얼마나 자주 있었나요?</td>
+                                <td>5개</td>
+                                <td>2024-01-01</td>
+                                <td>
+                                    <button class="btn btn-primary btn-sm">보기</button>
+                                    <button class="btn btn-warning btn-sm">수정</button>
+                                    <button class="btn btn-danger btn-sm">삭제</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>2</td>
+                                <td>스트레스 상황에서 나의 반응은?</td>
+                                <td>4개</td>
+                                <td>2024-01-01</td>
+                                <td>
+                                    <button class="btn btn-primary btn-sm">보기</button>
+                                    <button class="btn btn-warning btn-sm">수정</button>
+                                    <button class="btn btn-danger btn-sm">삭제</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 검사 결과 -->
+            <div id="results" class="content-section">
+                <div class="content-header">
+                    <h1>📈 검사 결과</h1>
+                    <p>전체 검사 결과를 분석하고 통계를 확인하세요</p>
+                </div>
+
+                <div class="search-container">
+                    <select class="filter-select">
+                        <option value="">전체 검사</option>
+                        <option value="disc">DiSC</option>
+                        <option value="mbti">MBTI</option>
+                        <option value="stress">스트레스</option>
+                    </select>
+                    <input type="date" class="filter-select">
+                    <input type="date" class="filter-select">
+                    <button class="btn btn-primary">🔍 필터</button>
+                </div>
+
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>사용자</th>
+                                <th>검사 유형</th>
+                                <th>결과</th>
+                                <th>점수</th>
+                                <th>검사 일시</th>
+                                <th>관리</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>김철수</td>
+                                <td><span class="badge badge-success">DiSC</span></td>
+                                <td>영향형</td>
+                                <td>85점</td>
+                                <td>2024-01-15</td>
+                                <td>
+                                    <button class="btn btn-primary btn-sm">보기</button>
+                                    <button class="btn btn-danger btn-sm">삭제</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>이영희</td>
+                                <td><span class="badge badge-success">MBTI</span></td>
+                                <td>ENFP</td>
+                                <td>78점</td>
+                                <td>2024-01-15</td>
+                                <td>
+                                    <button class="btn btn-primary btn-sm">보기</button>
+                                    <button class="btn btn-danger btn-sm">삭제</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>박민수</td>
+                                <td><span class="badge badge-success">스트레스</span></td>
+                                <td>보통</td>
+                                <td>65점</td>
+                                <td>2024-01-14</td>
+                                <td>
+                                    <button class="btn btn-primary btn-sm">보기</button>
+                                    <button class="btn btn-danger btn-sm">삭제</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // 현재 섹션
+        let currentSection = 'dashboard';
+
+        // 페이지 로드 시 초기화
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('관리자 페이지가 로드되었습니다.');
+            showAlert('관리자 페이지에 오신 것을 환영합니다!', 'success');
+        });
+
+        // 섹션 표시
+        function showSection(sectionId) {
+            // 모든 섹션 숨기기
+            document.querySelectorAll('.content-section').forEach(section => {
+                section.classList.remove('active');
+            });
+            
+            // 모든 네비게이션 링크 비활성화
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.classList.remove('active');
+            });
+            
+            // 선택된 섹션 표시
+            document.getElementById(sectionId).classList.add('active');
+            
+            // 선택된 네비게이션 링크 활성화
+            event.target.classList.add('active');
+            
+            currentSection = sectionId;
+            
+            // 섹션별 알림
+            const sectionNames = {
+                'dashboard': '대시보드',
+                'users': '사용자 관리',
+                'disc-questions': 'DiSC 문제 관리',
+                'mbti-questions': 'MBTI 문제 관리',
+                'stress-questions': '스트레스 문제 관리',
+                'results': '검사 결과'
+            };
+            
+            showAlert(`${sectionNames[sectionId]} 섹션으로 이동했습니다.`, 'success');
+        }
+
+        // 알림 표시
+        function showAlert(message, type) {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type}`;
+            alertDiv.textContent = message;
+            
+            const container = document.querySelector('.main-content');
+            container.insertBefore(alertDiv, container.firstChild);
+            
+            setTimeout(() => {
+                alertDiv.remove();
+            }, 3000);
+        }
+
+        // 로그아웃
+        function logout() {
+            if (confirm('정말로 로그아웃하시겠습니까?')) {
+                showAlert('로그아웃되었습니다.', 'success');
+                setTimeout(() => {
+                    window.location.href = 'index.html';
+                }, 1000);
+            }
+        }
+
+        // 버튼 클릭 이벤트들
+        document.addEventListener('click', function(e) {
+            if (e.target.classList.contains('btn')) {
+                const buttonText = e.target.textContent;
+                
+                if (buttonText.includes('문제 추가')) {
+                    showAlert('문제 추가 기능은 추후 구현될 예정입니다.', 'success');
+                } else if (buttonText.includes('새로고침')) {
+                    showAlert('데이터를 새로고침했습니다.', 'success');
+                } else if (buttonText.includes('검색') || buttonText.includes('필터')) {
+                    showAlert('검색/필터 기능은 추후 구현될 예정입니다.', 'success');
+                } else if (buttonText.includes('보기')) {
+                    showAlert('상세 보기 기능은 추후 구현될 예정입니다.', 'success');
+                } else if (buttonText.includes('수정')) {
+                    showAlert('수정 기능은 추후 구현될 예정입니다.', 'success');
+                } else if (buttonText.includes('삭제')) {
+                    if (confirm('정말로 삭제하시겠습니까?')) {
+                        showAlert('삭제되었습니다.', 'success');
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>
