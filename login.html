@@ -604,6 +604,26 @@
     </div>
 
     <script>
+        // Supabase 설정
+        const SUPABASE_PROJECT_ID = "lghwdvpnbvkihzgvwzpz";
+        const SUPABASE_URL = `https://${SUPABASE_PROJECT_ID}.supabase.co`;
+        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxnaHdkdnBuYnZraWh6Z3Z3enB6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0OTM5ODksImV4cCI6MjA3MzA2OTk4OX0.7ae1Cz706NOThj8lbJAfbHZW7nYWng8aZ4RJ9EDujMs";
+
+        // Supabase 클라이언트 초기화
+        let supabase;
+        try {
+            if (typeof window.supabase !== 'undefined') {
+                supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                console.log('Supabase 클라이언트가 성공적으로 초기화되었습니다.');
+            } else {
+                console.error('Supabase 라이브러리가 로드되지 않았습니다.');
+                supabase = null;
+            }
+        } catch (error) {
+            console.error('Supabase 초기화 오류:', error);
+            supabase = null;
+        }
+
         // 현재 사용자 유형
         let currentUserType = 'user';
 
@@ -726,27 +746,59 @@
 
         // 사용자 인증 (Supabase 연동)
         async function authenticateUser(email, password, userType) {
-            // 실제 구현에서는 Supabase Auth 사용
-            // 여기서는 데모용 더미 데이터 사용
-            
-            const demoUsers = {
-                'user@example.com': { password: 'user123', type: 'user', name: '김철수' },
-                'admin@example.com': { password: 'admin123', type: 'admin', name: '관리자' }
-            };
-            
-            const user = demoUsers[email];
-            
-            if (user && user.password === password && user.type === userType) {
-                return {
-                    success: true,
-                    token: 'demo_token_' + Date.now(),
-                    user: { email, name: user.name, type: userType }
-                };
-            } else {
-                return {
-                    success: false,
-                    message: '이메일 또는 비밀번호가 올바르지 않습니다.'
-                };
+            if (!supabase) {
+                return { success: false, message: '데이터베이스 연결에 실패했습니다.' };
+            }
+
+            try {
+                // Supabase Auth를 통한 로그인
+                const { data, error } = await supabase.auth.signInWithPassword({
+                    email: email,
+                    password: password
+                });
+
+                if (error) {
+                    console.error('로그인 오류:', error);
+                    return { success: false, message: error.message };
+                }
+
+                if (data.user) {
+                    // 사용자 프로필 정보 가져오기
+                    const { data: profile, error: profileError } = await supabase
+                        .from('profiles')
+                        .select('*')
+                        .eq('id', data.user.id)
+                        .single();
+
+                    if (profileError) {
+                        console.error('프로필 조회 오류:', profileError);
+                        return { success: false, message: '사용자 정보를 가져올 수 없습니다.' };
+                    }
+
+                    // 관리자 권한 확인
+                    if (userType === 'admin' && profile.user_type !== 'admin') {
+                        await supabase.auth.signOut();
+                        return { success: false, message: '관리자 권한이 없습니다.' };
+                    }
+
+                    return {
+                        success: true,
+                        user: {
+                            id: data.user.id,
+                            email: data.user.email,
+                            name: profile.name,
+                            org: profile.org,
+                            phone: profile.phone,
+                            user_type: profile.user_type
+                        },
+                        token: data.session?.access_token || 'demo_token'
+                    };
+                }
+
+                return { success: false, message: '로그인에 실패했습니다.' };
+            } catch (error) {
+                console.error('인증 처리 오류:', error);
+                return { success: false, message: '로그인 중 오류가 발생했습니다.' };
             }
         }
 
@@ -839,15 +891,41 @@
 
         // 사용자 생성 (Supabase 연동)
         async function createUser(payload) {
-            // 실제 구현: Supabase Auth signUp(payload.email, payload.password, { data: payload })
-            // 여기서는 데모용 더미 응답만 반환합니다.
-            console.log('signup payload', payload);
-            
-            // 비밀번호는 로그에서 제외 (보안상 이유)
-            const { password, ...safePayload } = payload;
-            console.log('signup data (password 제외)', safePayload);
-            
-            return { success: true, message: '회원가입이 완료되었습니다.' };
+            if (!supabase) {
+                return { success: false, message: '데이터베이스 연결에 실패했습니다.' };
+            }
+
+            try {
+                // Supabase Auth를 통한 사용자 생성
+                const { password, ...userData } = payload;
+                
+                const { data, error } = await supabase.auth.signUp({
+                    email: payload.email,
+                    password: payload.password,
+                    options: {
+                        data: {
+                            org: payload.org,
+                            name: payload.name,
+                            phone: payload.phone
+                        }
+                    }
+                });
+
+                if (error) {
+                    console.error('회원가입 오류:', error);
+                    return { success: false, message: error.message };
+                }
+
+                if (data.user) {
+                    console.log('회원가입 성공:', data.user);
+                    return { success: true, message: '회원가입이 완료되었습니다! 이메일을 확인해주세요.' };
+                }
+
+                return { success: false, message: '알 수 없는 오류가 발생했습니다.' };
+            } catch (error) {
+                console.error('회원가입 처리 오류:', error);
+                return { success: false, message: '회원가입 중 오류가 발생했습니다.' };
+            }
         }
 
         // 비밀번호 실시간 유효성 검사 설정

@@ -745,6 +745,26 @@
     </div>
 
     <script>
+        // Supabase 설정
+        const SUPABASE_PROJECT_ID = "lghwdvpnbvkihzgvwzpz";
+        const SUPABASE_URL = `https://${SUPABASE_PROJECT_ID}.supabase.co`;
+        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxnaHdkdnBuYnZraWh6Z3Z3enB6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0OTM5ODksImV4cCI6MjA3MzA2OTk4OX0.7ae1Cz706NOThj8lbJAfbHZW7nYWng8aZ4RJ9EDujMs";
+
+        // Supabase 클라이언트 초기화
+        let supabase;
+        try {
+            if (typeof window.supabase !== 'undefined') {
+                supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                console.log('Supabase 클라이언트가 성공적으로 초기화되었습니다.');
+            } else {
+                console.error('Supabase 라이브러리가 로드되지 않았습니다.');
+                supabase = null;
+            }
+        } catch (error) {
+            console.error('Supabase 초기화 오류:', error);
+            supabase = null;
+        }
+
         // 테스트 데이터
         const testData = {
             disc: {

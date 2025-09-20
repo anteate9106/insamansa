@@ -1,23 +1,26 @@
 // Admin Page JavaScript
-// Supabase 설정 (실제 URL과 키로 교체 필요)
-const SUPABASE_URL = 'YOUR_SUPABASE_URL';
-const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
+// Supabase 설정
+const SUPABASE_PROJECT_ID = "lghwdvpnbvkihzgvwzpz";
+const SUPABASE_URL = `https://${SUPABASE_PROJECT_ID}.supabase.co`;
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxnaHdkdnBuYnZraWh6Z3Z3enB6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0OTM5ODksImV4cCI6MjA3MzA2OTk4OX0.7ae1Cz706NOThj8lbJAfbHZW7nYWng8aZ4RJ9EDujMs";
+
 
 // Supabase 클라이언트 초기화 (오류 처리 포함)
 let supabase;
 try {
-    if (SUPABASE_URL === 'YOUR_SUPABASE_URL' || SUPABASE_ANON_KEY === 'YOUR_SUPABASE_ANON_KEY') {
-        console.warn('Supabase 설정이 필요합니다. admin.js 파일에서 SUPABASE_URL과 SUPABASE_ANON_KEY를 실제 값으로 교체하세요.');
+    if (typeof window.supabase !== 'undefined') {
+        supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        console.log('Supabase 클라이언트가 성공적으로 초기화되었습니다.');
+    } else {
+        console.error('Supabase 라이브러리가 로드되지 않았습니다. HTML에서 Supabase CDN을 확인하세요.');
         // 임시로 더미 객체 생성
         supabase = {
             from: () => ({
                 select: () => ({ eq: () => ({ order: () => Promise.resolve({ data: [], error: null }) }) }),
-                insert: () => ({ select: () => ({ single: () => Promise.resolve({ data: null, error: { message: 'Supabase 설정 필요' } }) }) }),
-                delete: () => ({ eq: () => Promise.resolve({ error: { message: 'Supabase 설정 필요' } }) })
+                insert: () => ({ select: () => ({ single: () => Promise.resolve({ data: null, error: { message: 'Supabase 라이브러리 로드 필요' } }) }) }),
+                delete: () => ({ eq: () => Promise.resolve({ error: { message: 'Supabase 라이브러리 로드 필요' } }) })
             })
         };
-    } else {
-        supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     }
 } catch (error) {
     console.error('Supabase 초기화 오류:', error);
