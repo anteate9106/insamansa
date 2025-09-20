@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>로그인 - 청년 성격유형검사</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         * {
             margin: 0;
@@ -576,8 +577,9 @@
                     </label>
                 </div>
                 <div class="modal-buttons">
-                    <button type="button" class="modal-btn secondary" onclick="closeSignupModal()">취소</button>
-                    <button type="submit" class="modal-btn primary">가입하기</button>
+                <button type="button" class="modal-btn secondary" onclick="closeSignupModal()">취소</button>
+                <button type="submit" class="modal-btn primary">가입하기</button>
+                <button type="button" class="modal-btn secondary" onclick="testSignup()" style="margin-top: 10px; background: #ff6b6b;">🧪 테스트</button>
                 </div>
             </form>
         </div>
@@ -611,18 +613,29 @@
 
         // Supabase 클라이언트 초기화
         let supabase;
+        console.log('=== Supabase 초기화 시작 ===');
+        console.log('SUPABASE_PROJECT_ID:', SUPABASE_PROJECT_ID);
+        console.log('SUPABASE_URL:', SUPABASE_URL);
+        console.log('window.supabase 존재 여부:', typeof window.supabase !== 'undefined');
+        
         try {
             if (typeof window.supabase !== 'undefined') {
                 supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-                console.log('Supabase 클라이언트가 성공적으로 초기화되었습니다.');
+                console.log('✅ Supabase 클라이언트가 성공적으로 초기화되었습니다.');
+                console.log('Supabase 객체:', supabase);
             } else {
-                console.error('Supabase 라이브러리가 로드되지 않았습니다.');
+                console.error('❌ Supabase 라이브러리가 로드되지 않았습니다.');
+                console.error('window.supabase:', window.supabase);
                 supabase = null;
             }
         } catch (error) {
-            console.error('Supabase 초기화 오류:', error);
+            console.error('❌ Supabase 초기화 오류:', error);
+            console.error('오류 스택:', error.stack);
             supabase = null;
         }
+        
+        console.log('=== Supabase 초기화 완료 ===');
+        console.log('최종 supabase 객체:', supabase);
 
         // 현재 사용자 유형
         let currentUserType = 'user';
@@ -669,14 +682,47 @@
 
         // 이벤트 리스너 설정
         function setupEventListeners() {
+            console.log('=== 이벤트 리스너 설정 시작 ===');
+            
             // 로그인 폼 제출
-            document.getElementById('login-form').addEventListener('submit', handleLogin);
+            const loginForm = document.getElementById('login-form');
+            if (loginForm) {
+                loginForm.addEventListener('submit', handleLogin);
+                console.log('✅ 로그인 폼 이벤트 리스너 등록됨');
+            } else {
+                console.error('❌ 로그인 폼을 찾을 수 없습니다');
+            }
             
             // 회원가입 폼 제출
-            document.getElementById('signup-form').addEventListener('submit', handleSignup);
+            const signupForm = document.getElementById('signup-form');
+            if (signupForm) {
+                signupForm.addEventListener('submit', handleSignup);
+                console.log('✅ 회원가입 폼 이벤트 리스너 등록됨');
+            } else {
+                console.error('❌ 회원가입 폼을 찾을 수 없습니다');
+            }
             
             // 비밀번호 찾기 폼 제출
-            document.getElementById('forgot-password-form').addEventListener('submit', handleForgotPassword);
+            const forgotForm = document.getElementById('forgot-password-form');
+            if (forgotForm) {
+                forgotForm.addEventListener('submit', handleForgotPassword);
+                console.log('✅ 비밀번호 찾기 폼 이벤트 리스너 등록됨');
+            } else {
+                console.error('❌ 비밀번호 찾기 폼을 찾을 수 없습니다');
+            }
+            
+            // 회원가입 버튼에 직접 클릭 이벤트도 추가 (디버깅용)
+            const signupButton = signupForm?.querySelector('button[type="submit"]');
+            if (signupButton) {
+                signupButton.addEventListener('click', function(e) {
+                    console.log('=== 회원가입 버튼 클릭됨 ===');
+                    console.log('이벤트 객체:', e);
+                    console.log('버튼 요소:', this);
+                });
+                console.log('✅ 회원가입 버튼 클릭 이벤트 등록됨');
+            }
+            
+            console.log('=== 이벤트 리스너 설정 완료 ===');
         }
 
         // 저장된 로그인 정보 확인
@@ -815,6 +861,7 @@
 
         // 회원가입 처리
         async function handleSignup(e) {
+            console.log('=== 회원가입 함수 호출됨 ===');
             e.preventDefault();
             
             const org = document.getElementById('signup-org').value.trim();
@@ -824,6 +871,8 @@
             const password = document.getElementById('signup-password').value;
             const passwordConfirm = document.getElementById('signup-password-confirm').value;
             const consent = document.getElementById('signup-consent').checked;
+            
+            console.log('입력된 정보:', { org, name, phone, email, password: '***', passwordConfirm: '***', consent });
             
             if (!org || !name || !phone || !email || !password || !passwordConfirm) {
                 showAlert('모든 필드를 입력해주세요.', 'error');
@@ -891,11 +940,18 @@
 
         // 사용자 생성 (Supabase 연동)
         async function createUser(payload) {
+            console.log('=== createUser 함수 호출됨 ===');
+            console.log('supabase 객체:', supabase);
+            console.log('payload:', { ...payload, password: '***' });
+            
             if (!supabase) {
+                console.error('❌ Supabase 객체가 없습니다');
                 return { success: false, message: '데이터베이스 연결에 실패했습니다.' };
             }
 
             try {
+                console.log('Supabase signUp 호출 시작...');
+                
                 // Supabase Auth를 통한 사용자 생성
                 const { password, ...userData } = payload;
                 
@@ -910,6 +966,8 @@
                         }
                     }
                 });
+                
+                console.log('Supabase signUp 응답:', { data, error });
 
                 if (error) {
                     console.error('회원가입 오류:', error);
@@ -1039,6 +1097,35 @@
             setTimeout(() => {
                 alertDiv.remove();
             }, 5000);
+        }
+
+        // 테스트 함수
+        async function testSignup() {
+            console.log('=== 테스트 회원가입 시작 ===');
+            
+            // 테스트 데이터로 폼 채우기
+            document.getElementById('signup-org').value = '테스트 소속';
+            document.getElementById('signup-name').value = '테스트 사용자';
+            document.getElementById('signup-phone').value = '010-1234-5678';
+            document.getElementById('signup-email').value = 'test' + Date.now() + '@example.com';
+            document.getElementById('signup-password').value = 'Test123!@';
+            document.getElementById('signup-password-confirm').value = 'Test123!@';
+            document.getElementById('signup-consent').checked = true;
+            
+            console.log('테스트 데이터 입력 완료');
+            
+            // Supabase 연결 상태 확인
+            console.log('Supabase 연결 상태:', !!supabase);
+            if (supabase) {
+                console.log('Supabase auth 객체:', supabase.auth);
+            }
+            
+            // 폼 제출 시뮬레이션
+            const form = document.getElementById('signup-form');
+            if (form) {
+                const submitEvent = new Event('submit', { bubbles: true, cancelable: true });
+                form.dispatchEvent(submitEvent);
+            }
         }
 
         // 로딩 표시
