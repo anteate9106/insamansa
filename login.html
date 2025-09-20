@@ -447,20 +447,26 @@
             </div>
             <form id="signup-form">
                 <div class="form-group">
+                    <label for="signup-org">소속</label>
+                    <input type="text" id="signup-org" placeholder="소속을 입력하세요" required>
+                </div>
+                <div class="form-group">
                     <label for="signup-name">이름</label>
                     <input type="text" id="signup-name" placeholder="이름을 입력하세요" required>
                 </div>
                 <div class="form-group">
-                    <label for="signup-email">이메일</label>
+                    <label for="signup-phone">연락처</label>
+                    <input type="tel" id="signup-phone" placeholder="연락처를 입력하세요 (예: 010-1234-5678)" required>
+                </div>
+                <div class="form-group">
+                    <label for="signup-email">이메일주소</label>
                     <input type="email" id="signup-email" placeholder="이메일을 입력하세요" required>
                 </div>
-                <div class="form-group">
-                    <label for="signup-password">비밀번호</label>
-                    <input type="password" id="signup-password" placeholder="비밀번호를 입력하세요" required>
-                </div>
-                <div class="form-group">
-                    <label for="signup-confirm-password">비밀번호 확인</label>
-                    <input type="password" id="signup-confirm-password" placeholder="비밀번호를 다시 입력하세요" required>
+                <div class="form-group" style="display:flex;align-items:center;gap:8px;">
+                    <input type="checkbox" id="signup-consent" style="width:18px;height:18px;">
+                    <label for="signup-consent" style="margin:0;">개인정보 수집 및 이용에 동의합니다
+                        <span style="display:block;font-size:12px;color:#888;margin-top:4px;">(수집 항목: 소속, 이름, 연락처, 이메일 | 목적: 회원관리 및 서비스 제공 | 보유기간: 탈퇴 시 즉시 파기)</span>
+                    </label>
                 </div>
                 <div class="modal-buttons">
                     <button type="button" class="modal-btn secondary" onclick="closeSignupModal()">취소</button>
@@ -503,6 +509,13 @@
             setupEventListeners();
             
             console.log('로그인 페이지가 로드되었습니다.');
+
+            // URL 해시로 회원가입/비번찾기 모달 자동 오픈
+            if (location.hash === '#signup') {
+                openSignupModal();
+            } else if (location.hash === '#forgot') {
+                openForgotPasswordModal();
+            }
         });
 
         // 사용자 유형 선택
@@ -642,31 +655,38 @@
         async function handleSignup(e) {
             e.preventDefault();
             
-            const name = document.getElementById('signup-name').value;
-            const email = document.getElementById('signup-email').value;
-            const password = document.getElementById('signup-password').value;
-            const confirmPassword = document.getElementById('signup-confirm-password').value;
+            const org = document.getElementById('signup-org').value.trim();
+            const name = document.getElementById('signup-name').value.trim();
+            const phone = document.getElementById('signup-phone').value.trim();
+            const email = document.getElementById('signup-email').value.trim();
+            const consent = document.getElementById('signup-consent').checked;
             
-            if (!name || !email || !password || !confirmPassword) {
-                showAlert('모든 필드를 입력해주세요.', 'error');
+            if (!org || !name || !phone || !email) {
+                showAlert('소속, 이름, 연락처, 이메일을 모두 입력해주세요.', 'error');
                 return;
             }
             
-            if (password !== confirmPassword) {
-                showAlert('비밀번호가 일치하지 않습니다.', 'error');
+            // 간단한 연락처/이메일 형식 검사
+            const phoneRegex = /^(01[0-9])-?([0-9]{3,4})-?([0-9]{4})$/;
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!phoneRegex.test(phone)) {
+                showAlert('연락처 형식이 올바르지 않습니다. 예) 010-1234-5678', 'error');
                 return;
             }
-            
-            if (password.length < 6) {
-                showAlert('비밀번호는 6자 이상이어야 합니다.', 'error');
+            if (!emailRegex.test(email)) {
+                showAlert('이메일 형식이 올바르지 않습니다.', 'error');
+                return;
+            }
+            if (!consent) {
+                showAlert('개인정보 수집 및 이용에 동의해야 가입할 수 있습니다.', 'error');
                 return;
             }
             
             try {
                 showLoading(true);
                 
-                // 실제 구현에서는 Supabase Auth 사용
-                const result = await createUser(name, email, password);
+                // 실제 구현에서는 Supabase에 사용자 메타데이터로 저장
+                const result = await createUser({ org, name, phone, email });
                 
                 if (result.success) {
                     showAlert('회원가입이 완료되었습니다! 로그인해주세요.', 'success');
@@ -687,14 +707,11 @@
         }
 
         // 사용자 생성 (Supabase 연동)
-        async function createUser(name, email, password) {
-            // 실제 구현에서는 Supabase Auth 사용
-            // 여기서는 데모용 더미 응답
-            
-            return {
-                success: true,
-                message: '회원가입이 완료되었습니다.'
-            };
+        async function createUser(payload) {
+            // 실제 구현: Supabase Auth signUp(email, temp_password, { data: payload })
+            // 여기서는 데모용 더미 응답만 반환합니다.
+            console.log('signup payload', payload);
+            return { success: true, message: '회원가입이 완료되었습니다.' };
         }
 
         // 비밀번호 찾기 모달 열기

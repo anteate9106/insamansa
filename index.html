@@ -132,6 +132,7 @@
             box-shadow: 0 10px 30px rgba(0,0,0,0.1);
             transition: transform 0.3s ease, box-shadow 0.3s ease;
             cursor: pointer;
+            position: relative;
         }
 
         .test-card:hover {
@@ -172,6 +173,64 @@
         .start-btn:hover {
             transform: scale(1.05);
             box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .start-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .start-btn:disabled:hover {
+            transform: none;
+            box-shadow: none;
+        }
+
+        .login-required-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            border-radius: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .login-required-overlay h3 {
+            margin-bottom: 10px;
+            font-size: 1.2rem;
+        }
+
+        .login-required-overlay p {
+            margin-bottom: 20px;
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        .login-required-btn {
+            background: linear-gradient(45deg, #28a745, #20c997);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .login-required-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(40, 167, 69, 0.4);
         }
 
         .test-section {
@@ -519,7 +578,7 @@
             <div class="navbar">
                 <!-- 로그인하지 않은 상태 -->
                 <div id="guest-nav">
-                    <a href="login.html" class="nav-btn">
+                    <a href="login.html#signup" class="nav-btn">
                         <i class="fas fa-user-plus"></i>
                         회원가입
                     </a>
@@ -567,7 +626,12 @@
                 </div>
                 <h2>DiSC 성격유형검사</h2>
                 <p>Dominance(지배형), Influence(영향형), Steadiness(안정형), Conscientiousness(신중형)으로 나누어 당신의 행동 스타일과 의사소통 방식을 분석합니다.</p>
-                <button class="start-btn">검사 시작하기</button>
+                <button class="start-btn" id="disc-start-btn">검사 시작하기</button>
+                <div class="login-required-overlay" id="disc-login-overlay" style="display: none;">
+                    <h3><i class="fas fa-lock"></i> 로그인이 필요합니다</h3>
+                    <p>검사를 시작하려면 먼저 로그인해주세요</p>
+                    <a href="login.html" class="login-required-btn">로그인하기</a>
+                </div>
             </div>
 
             <div class="test-card" onclick="startTest('mbti')">
@@ -576,7 +640,12 @@
                 </div>
                 <h2>MBTI 성격유형검사</h2>
                 <p>16가지 성격유형으로 나누어 당신의 인지 기능과 성격 특성을 분석합니다. 직업 선택과 인간관계에 도움이 됩니다.</p>
-                <button class="start-btn">검사 시작하기</button>
+                <button class="start-btn" id="mbti-start-btn">검사 시작하기</button>
+                <div class="login-required-overlay" id="mbti-login-overlay" style="display: none;">
+                    <h3><i class="fas fa-lock"></i> 로그인이 필요합니다</h3>
+                    <p>검사를 시작하려면 먼저 로그인해주세요</p>
+                    <a href="login.html" class="login-required-btn">로그인하기</a>
+                </div>
             </div>
 
             <div class="test-card" onclick="startTest('stress')">
@@ -585,7 +654,12 @@
                 </div>
                 <h2>스트레스 관리 척도</h2>
                 <p>현재 스트레스 수준과 대처 방식을 분석하여 건강한 스트레스 관리 방법을 제안합니다.</p>
-                <button class="start-btn">검사 시작하기</button>
+                <button class="start-btn" id="stress-start-btn">검사 시작하기</button>
+                <div class="login-required-overlay" id="stress-login-overlay" style="display: none;">
+                    <h3><i class="fas fa-lock"></i> 로그인이 필요합니다</h3>
+                    <p>검사를 시작하려면 먼저 로그인해주세요</p>
+                    <a href="login.html" class="login-required-btn">로그인하기</a>
+                </div>
             </div>
         </div>
 
@@ -849,6 +923,12 @@
 
         // 테스트 시작
         function startTest(testType) {
+            // 로그인 상태 확인
+            if (!isLoggedIn()) {
+                showLoginRequired(testType);
+                return;
+            }
+            
             currentTest = testType;
             currentQuestion = 0;
             answers = {};
@@ -867,6 +947,44 @@
             
             loadQuestion(testType, 0);
             updateProgress(testType);
+        }
+
+        // 로그인 상태 확인
+        function isLoggedIn() {
+            const currentUser = localStorage.getItem('current_user');
+            const adminToken = localStorage.getItem('admin_token');
+            return !!(currentUser || adminToken);
+        }
+
+        // 로그인 필요 오버레이 표시
+        function showLoginRequired(testType) {
+            const overlay = document.getElementById(testType + '-login-overlay');
+            const startBtn = document.getElementById(testType + '-start-btn');
+            
+            overlay.style.display = 'flex';
+            startBtn.disabled = true;
+            
+            // 알림 표시
+            showNotification('검사를 시작하려면 로그인이 필요합니다.', 'error');
+        }
+
+        // 로그인 상태에 따른 UI 업데이트
+        function updateTestCardsForLogin() {
+            const isLoggedIn = !!(localStorage.getItem('current_user') || localStorage.getItem('admin_token'));
+            
+            const testTypes = ['disc', 'mbti', 'stress'];
+            testTypes.forEach(testType => {
+                const overlay = document.getElementById(testType + '-login-overlay');
+                const startBtn = document.getElementById(testType + '-start-btn');
+                
+                if (isLoggedIn) {
+                    overlay.style.display = 'none';
+                    startBtn.disabled = false;
+                } else {
+                    overlay.style.display = 'flex';
+                    startBtn.disabled = true;
+                }
+            });
         }
 
         // 질문 로드
@@ -1190,6 +1308,9 @@
                 // 로그인하지 않은 상태
                 showGuestNav();
             }
+            
+            // 테스트 카드 상태 업데이트
+            updateTestCardsForLogin();
         }
 
         // 게스트 네비게이션 표시
@@ -1216,6 +1337,9 @@
                 
                 // 게스트 네비게이션으로 변경
                 showGuestNav();
+                
+                // 테스트 카드 상태 업데이트
+                updateTestCardsForLogin();
                 
                 // 알림 표시
                 showNotification('로그아웃되었습니다.', 'success');
