@@ -287,6 +287,104 @@
             text-align: center;
         }
 
+        /* 회원가입 모달 특별 스타일 */
+        #signup-modal .modal-content {
+            max-width: 450px;
+            max-height: 80vh;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        #signup-modal .modal-content::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        #signup-modal .modal-content::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+
+        #signup-modal .modal-content::-webkit-scrollbar-thumb {
+            background: #667eea;
+            border-radius: 10px;
+        }
+
+        #signup-modal .modal-content::-webkit-scrollbar-thumb:hover {
+            background: #5a6fd8;
+        }
+
+        /* 회원가입 폼 스타일 개선 */
+        #signup-form {
+            text-align: left;
+        }
+
+        #signup-form .form-group {
+            margin-bottom: 15px;
+        }
+
+        #signup-form .form-group small {
+            display: block;
+            margin-top: 5px;
+            color: #666;
+            font-size: 11px;
+        }
+
+        /* 모바일 반응형 스타일 */
+        @media (max-width: 768px) {
+            #signup-modal .modal-content {
+                max-width: 95%;
+                max-height: 90vh;
+                padding: 15px;
+                margin: 10px;
+            }
+            
+            #signup-form .form-group {
+                margin-bottom: 12px;
+            }
+            
+            #signup-form input {
+                padding: 12px;
+                font-size: 16px; /* iOS 줌 방지 */
+            }
+        }
+
+        /* 모달 버튼 스타일 개선 */
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .modal-btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .modal-btn.primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .modal-btn.primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .modal-btn.secondary {
+            background: #f8f9fa;
+            color: #666;
+            border: 1px solid #e9ecef;
+        }
+
+        .modal-btn.secondary:hover {
+            background: #e9ecef;
+        }
+
         .modal-header {
             margin-bottom: 20px;
         }
@@ -462,6 +560,15 @@
                     <label for="signup-email">이메일주소</label>
                     <input type="email" id="signup-email" placeholder="이메일을 입력하세요" required>
                 </div>
+                <div class="form-group">
+                    <label for="signup-password">비밀번호</label>
+                    <input type="password" id="signup-password" placeholder="비밀번호를 입력하세요 (8자 이상)" required>
+                    <small style="color: #666; font-size: 12px;">8자 이상, 영문, 숫자, 특수문자 포함</small>
+                </div>
+                <div class="form-group">
+                    <label for="signup-password-confirm">비밀번호 확인</label>
+                    <input type="password" id="signup-password-confirm" placeholder="비밀번호를 다시 입력하세요" required>
+                </div>
                 <div class="form-group" style="display:flex;align-items:center;gap:8px;">
                     <input type="checkbox" id="signup-consent" style="width:18px;height:18px;">
                     <label for="signup-consent" style="margin:0;">개인정보 수집 및 이용에 동의합니다
@@ -507,6 +614,9 @@
             
             // 폼 이벤트 리스너 등록
             setupEventListeners();
+            
+            // 비밀번호 실시간 유효성 검사
+            setupPasswordValidation();
             
             console.log('로그인 페이지가 로드되었습니다.');
 
@@ -659,10 +769,31 @@
             const name = document.getElementById('signup-name').value.trim();
             const phone = document.getElementById('signup-phone').value.trim();
             const email = document.getElementById('signup-email').value.trim();
+            const password = document.getElementById('signup-password').value;
+            const passwordConfirm = document.getElementById('signup-password-confirm').value;
             const consent = document.getElementById('signup-consent').checked;
             
-            if (!org || !name || !phone || !email) {
-                showAlert('소속, 이름, 연락처, 이메일을 모두 입력해주세요.', 'error');
+            if (!org || !name || !phone || !email || !password || !passwordConfirm) {
+                showAlert('모든 필드를 입력해주세요.', 'error');
+                return;
+            }
+            
+            // 비밀번호 유효성 검사
+            if (password.length < 8) {
+                showAlert('비밀번호는 8자 이상이어야 합니다.', 'error');
+                return;
+            }
+            
+            // 비밀번호 복잡성 검사 (영문, 숫자, 특수문자 포함)
+            const passwordRegex = /^(?=.*[a-zA-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/;
+            if (!passwordRegex.test(password)) {
+                showAlert('비밀번호는 영문, 숫자, 특수문자를 포함해야 합니다.', 'error');
+                return;
+            }
+            
+            // 비밀번호 확인 검사
+            if (password !== passwordConfirm) {
+                showAlert('비밀번호가 일치하지 않습니다.', 'error');
                 return;
             }
             
@@ -686,7 +817,7 @@
                 showLoading(true);
                 
                 // 실제 구현에서는 Supabase에 사용자 메타데이터로 저장
-                const result = await createUser({ org, name, phone, email });
+                const result = await createUser({ org, name, phone, email, password });
                 
                 if (result.success) {
                     showAlert('회원가입이 완료되었습니다! 로그인해주세요.', 'success');
@@ -708,10 +839,59 @@
 
         // 사용자 생성 (Supabase 연동)
         async function createUser(payload) {
-            // 실제 구현: Supabase Auth signUp(email, temp_password, { data: payload })
+            // 실제 구현: Supabase Auth signUp(payload.email, payload.password, { data: payload })
             // 여기서는 데모용 더미 응답만 반환합니다.
             console.log('signup payload', payload);
+            
+            // 비밀번호는 로그에서 제외 (보안상 이유)
+            const { password, ...safePayload } = payload;
+            console.log('signup data (password 제외)', safePayload);
+            
             return { success: true, message: '회원가입이 완료되었습니다.' };
+        }
+
+        // 비밀번호 실시간 유효성 검사 설정
+        function setupPasswordValidation() {
+            const passwordInput = document.getElementById('signup-password');
+            const confirmInput = document.getElementById('signup-password-confirm');
+            
+            if (!passwordInput || !confirmInput) return;
+            
+            // 비밀번호 입력 시 실시간 검사
+            passwordInput.addEventListener('input', function() {
+                const password = this.value;
+                const isValid = validatePassword(password);
+                updatePasswordFieldStyle(this, isValid);
+            });
+            
+            // 비밀번호 확인 입력 시 실시간 검사
+            confirmInput.addEventListener('input', function() {
+                const password = document.getElementById('signup-password').value;
+                const confirm = this.value;
+                const isValid = password === confirm && confirm.length > 0;
+                updatePasswordFieldStyle(this, isValid);
+            });
+        }
+
+        // 비밀번호 유효성 검사
+        function validatePassword(password) {
+            if (password.length < 8) return false;
+            const passwordRegex = /^(?=.*[a-zA-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/;
+            return passwordRegex.test(password);
+        }
+
+        // 비밀번호 필드 스타일 업데이트
+        function updatePasswordFieldStyle(input, isValid) {
+            if (isValid) {
+                input.style.borderColor = '#28a745';
+                input.style.backgroundColor = '#f8fff9';
+            } else if (input.value.length > 0) {
+                input.style.borderColor = '#dc3545';
+                input.style.backgroundColor = '#fff8f8';
+            } else {
+                input.style.borderColor = '#e9ecef';
+                input.style.backgroundColor = 'white';
+            }
         }
 
         // 비밀번호 찾기 모달 열기
