@@ -602,18 +602,28 @@
                     <input type="password" id="password" placeholder="비밀번호를 입력하세요" required>
                 </div>
 
-                <button type="submit" class="login-btn" id="login-btn">
-                    로그인
-                </button>
-            </form>
-
-            <div class="divider">
-                <span>또는</span>
-            </div>
-
-            <button class="signup-btn" onclick="openSignupModal()">
-                회원가입
+            <button type="submit" class="login-btn" id="login-btn">
+                로그인
             </button>
+        </form>
+
+        <!-- 테스트 버튼들 -->
+        <div style="margin-top: 15px; display: flex; gap: 10px; justify-content: center;">
+            <button type="button" onclick="testLogin()" style="background: #ff6b6b; color: white; border: none; padding: 8px 12px; border-radius: 5px; font-size: 12px; cursor: pointer;">
+                🧪 테스트 로그인
+            </button>
+            <button type="button" onclick="demoLogin()" style="background: #4CAF50; color: white; border: none; padding: 8px 12px; border-radius: 5px; font-size: 12px; cursor: pointer;">
+                🎭 데모 로그인
+            </button>
+        </div>
+
+        <div class="divider">
+            <span>또는</span>
+        </div>
+
+        <button class="signup-btn" onclick="openSignupModal()">
+            회원가입
+        </button>
 
             <div class="forgot-password">
                 <a href="#" onclick="openForgotPasswordModal()">비밀번호를 잊으셨나요?</a>
@@ -876,20 +886,43 @@
 
         // 사용자 인증 (Supabase 연동)
         async function authenticateUser(email, password, userType) {
+            console.log('=== 로그인 시도 ===');
+            console.log('이메일:', email);
+            console.log('사용자 유형:', userType);
+            console.log('Supabase 객체:', !!supabase);
+            
             if (!supabase) {
+                console.error('❌ Supabase 객체가 없습니다');
                 return { success: false, message: '데이터베이스 연결에 실패했습니다.' };
             }
 
             try {
+                console.log('Supabase signInWithPassword 호출 중...');
+                
                 // Supabase Auth를 통한 로그인
                 const { data, error } = await supabase.auth.signInWithPassword({
                     email: email,
                     password: password
                 });
 
+                console.log('Supabase 응답:', { data, error });
+
                 if (error) {
-                    console.error('로그인 오류:', error);
-                    return { success: false, message: error.message };
+                    console.error('❌ 로그인 오류:', error);
+                    
+                    // 더 구체적인 오류 메시지 제공
+                    let errorMessage = '로그인에 실패했습니다.';
+                    if (error.message.includes('Invalid login credentials')) {
+                        errorMessage = '이메일 또는 비밀번호가 올바르지 않습니다.';
+                    } else if (error.message.includes('Email not confirmed')) {
+                        errorMessage = '이메일 인증이 필요합니다. 이메일을 확인해주세요.';
+                    } else if (error.message.includes('Too many requests')) {
+                        errorMessage = '너무 많은 로그인 시도가 있었습니다. 잠시 후 다시 시도해주세요.';
+                    } else {
+                        errorMessage = error.message;
+                    }
+                    
+                    return { success: false, message: errorMessage };
                 }
 
                 if (data.user) {
@@ -928,7 +961,27 @@
                 return { success: false, message: '로그인에 실패했습니다.' };
             } catch (error) {
                 console.error('인증 처리 오류:', error);
-                return { success: false, message: '로그인 중 오류가 발생했습니다.' };
+                
+                // Supabase 연결 실패 시 데모 모드로 폴백
+                console.warn('⚠️ Supabase 연결 실패. 데모 모드로 폴백합니다.');
+                
+                // 간단한 이메일/비밀번호 체크 (데모용)
+                if (email === 'demo@example.com' && password === 'demo123') {
+                    return {
+                        success: true,
+                        user: {
+                            id: 'demo-user-id',
+                            email: 'demo@example.com',
+                            name: '데모 사용자',
+                            org: '데모 소속',
+                            phone: '010-0000-0000',
+                            user_type: 'user'
+                        },
+                        token: 'demo_token'
+                    };
+                }
+                
+                return { success: false, message: '이메일 또는 비밀번호가 올바르지 않습니다.' };
             }
         }
 
@@ -1266,6 +1319,61 @@
                 const submitEvent = new Event('submit', { bubbles: true, cancelable: true });
                 form.dispatchEvent(submitEvent);
             }
+        }
+
+        // 테스트 로그인 함수
+        async function testLogin() {
+            console.log('=== 테스트 로그인 시작 ===');
+            
+            // 테스트 계정으로 로그인 시도
+            const testEmail = 'test@example.com';
+            const testPassword = 'Test123!@';
+            
+            // 폼에 테스트 데이터 입력
+            document.getElementById('email').value = testEmail;
+            document.getElementById('password').value = testPassword;
+            
+            console.log('테스트 로그인 데이터 입력 완료');
+            
+            // 로그인 시도
+            try {
+                const result = await authenticateUser(testEmail, testPassword, 'user');
+                console.log('테스트 로그인 결과:', result);
+                
+                if (result.success) {
+                    showAlert('테스트 로그인 성공!', 'success');
+                } else {
+                    showAlert('테스트 로그인 실패: ' + result.message, 'error');
+                }
+            } catch (error) {
+                console.error('테스트 로그인 오류:', error);
+                showAlert('테스트 로그인 오류: ' + error.message, 'error');
+            }
+        }
+
+        // 데모 계정 로그인 함수
+        async function demoLogin() {
+            console.log('=== 데모 계정 로그인 ===');
+            
+            // 실제 회원가입으로 생성된 계정이 없다면 데모 모드로 로그인
+            const demoUser = {
+                id: 'demo-user-id',
+                email: 'demo@example.com',
+                name: '데모 사용자',
+                org: '데모 소속',
+                phone: '010-0000-0000',
+                user_type: 'user'
+            };
+            
+            // localStorage에 데모 사용자 정보 저장
+            localStorage.setItem('current_user', JSON.stringify(demoUser));
+            localStorage.setItem('user_token', 'demo_token');
+            
+            showAlert('데모 계정으로 로그인되었습니다!', 'success');
+            
+            setTimeout(() => {
+                window.location.href = 'index.html';
+            }, 1500);
         }
 
         // 로딩 표시
