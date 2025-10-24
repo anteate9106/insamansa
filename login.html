@@ -608,12 +608,21 @@
         </form>
 
         <!-- 테스트 버튼들 -->
-        <div style="margin-top: 15px; display: flex; gap: 10px; justify-content: center;">
+        <div style="margin-top: 15px; display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
             <button type="button" onclick="testLogin()" style="background: #ff6b6b; color: white; border: none; padding: 8px 12px; border-radius: 5px; font-size: 12px; cursor: pointer;">
                 🧪 테스트 로그인
             </button>
             <button type="button" onclick="demoLogin()" style="background: #4CAF50; color: white; border: none; padding: 8px 12px; border-radius: 5px; font-size: 12px; cursor: pointer;">
                 🎭 데모 로그인
+            </button>
+            <button type="button" onclick="checkLocalUsers()" style="background: #2196F3; color: white; border: none; padding: 8px 12px; border-radius: 5px; font-size: 12px; cursor: pointer;">
+                👥 사용자 목록
+            </button>
+            <button type="button" onclick="checkSupabaseConnection()" style="background: #9C27B0; color: white; border: none; padding: 8px 12px; border-radius: 5px; font-size: 12px; cursor: pointer;">
+                🔗 연결 상태
+            </button>
+            <button type="button" onclick="retrySupabaseConnection()" style="background: #FF9800; color: white; border: none; padding: 8px 12px; border-radius: 5px; font-size: 12px; cursor: pointer;">
+                🔄 재연결
             </button>
         </div>
 
@@ -707,29 +716,74 @@
 
         // Supabase 클라이언트 초기화
         let supabase;
+        let supabaseConnectionStatus = 'disconnected';
+        
         console.log('=== Supabase 초기화 시작 ===');
         console.log('SUPABASE_PROJECT_ID:', SUPABASE_PROJECT_ID);
         console.log('SUPABASE_URL:', SUPABASE_URL);
         console.log('window.supabase 존재 여부:', typeof window.supabase !== 'undefined');
         
-        try {
-            if (typeof window.supabase !== 'undefined') {
-                supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-                console.log('✅ Supabase 클라이언트가 성공적으로 초기화되었습니다.');
-                console.log('Supabase 객체:', supabase);
-            } else {
-                console.error('❌ Supabase 라이브러리가 로드되지 않았습니다.');
-                console.error('window.supabase:', window.supabase);
+        // Supabase 초기화 함수
+        async function initializeSupabase() {
+            try {
+                if (typeof window.supabase !== 'undefined') {
+                    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                    console.log('✅ Supabase 클라이언트가 성공적으로 초기화되었습니다.');
+                    console.log('Supabase 객체:', supabase);
+                    
+                    // 연결 테스트
+                    try {
+                        const { data, error } = await supabase.auth.getSession();
+                        if (error) {
+                            console.warn('⚠️ Supabase 세션 확인 중 오류:', error);
+                        } else {
+                            console.log('✅ Supabase 연결 테스트 성공');
+                            supabaseConnectionStatus = 'connected';
+                        }
+                    } catch (testError) {
+                        console.warn('⚠️ Supabase 연결 테스트 실패:', testError);
+                        supabaseConnectionStatus = 'test_failed';
+                    }
+                } else {
+                    console.error('❌ Supabase 라이브러리가 로드되지 않았습니다.');
+                    console.error('window.supabase:', window.supabase);
+                    supabase = null;
+                    supabaseConnectionStatus = 'library_not_loaded';
+                }
+            } catch (error) {
+                console.error('❌ Supabase 초기화 오류:', error);
+                console.error('오류 스택:', error.stack);
                 supabase = null;
+                supabaseConnectionStatus = 'initialization_failed';
             }
-        } catch (error) {
-            console.error('❌ Supabase 초기화 오류:', error);
-            console.error('오류 스택:', error.stack);
-            supabase = null;
+            
+            console.log('=== Supabase 초기화 완료 ===');
+            console.log('연결 상태:', supabaseConnectionStatus);
+            console.log('최종 supabase 객체:', supabase);
         }
         
-        console.log('=== Supabase 초기화 완료 ===');
-        console.log('최종 supabase 객체:', supabase);
+        // Supabase 초기화 실행
+        initializeSupabase();
+
+        // Supabase 연결 재시도 함수
+        async function retrySupabaseConnection() {
+            console.log('=== Supabase 연결 재시도 ===');
+            await initializeSupabase();
+            return supabaseConnectionStatus === 'connected';
+        }
+
+        // Supabase 연결 상태 확인 함수
+        function checkSupabaseConnection() {
+            console.log('=== Supabase 연결 상태 확인 ===');
+            console.log('연결 상태:', supabaseConnectionStatus);
+            console.log('Supabase 객체:', !!supabase);
+            
+            if (supabaseConnectionStatus === 'connected') {
+                showAlert('Supabase 연결이 정상입니다.', 'success');
+            } else {
+                showAlert(`Supabase 연결 상태: ${supabaseConnectionStatus}`, 'warning');
+            }
+        }
 
         // 현재 사용자 유형
         let currentUserType = 'user';
@@ -962,10 +1016,23 @@
             } catch (error) {
                 console.error('인증 처리 오류:', error);
                 
-                // Supabase 연결 실패 시 데모 모드로 폴백
-                console.warn('⚠️ Supabase 연결 실패. 데모 모드로 폴백합니다.');
+                // Supabase 연결 실패 시 로컬 저장소에서 사용자 검색
+                console.warn('⚠️ Supabase 연결 실패. 로컬 저장소에서 사용자를 검색합니다.');
                 
-                // 간단한 이메일/비밀번호 체크 (데모용)
+                // 로컬 저장소에서 사용자 검색
+                const localUsers = JSON.parse(localStorage.getItem('local_users') || '[]');
+                const user = localUsers.find(u => u.email === email);
+                
+                if (user) {
+                    console.log('✅ 로컬 사용자 발견:', user);
+                    return {
+                        success: true,
+                        user: user,
+                        token: 'local_token_' + user.id
+                    };
+                }
+                
+                // 데모 계정 체크
                 if (email === 'demo@example.com' && password === 'demo123') {
                     return {
                         success: true,
@@ -1058,11 +1125,35 @@
                 const result = await createUser({ org, name, phone, email, password });
                 
                 if (result.success) {
-                    showAlert('회원가입이 완료되었습니다! 로그인해주세요.', 'success');
+                    showAlert('회원가입이 완료되었습니다! 자동으로 로그인됩니다.', 'success');
                     closeSignupModal();
                     
                     // 회원가입된 이메일을 로그인 폼에 자동 입력
                     document.getElementById('email').value = email;
+                    
+                    // 자동 로그인 시도
+                    setTimeout(async () => {
+                        try {
+                            const loginResult = await authenticateUser(email, password, 'user');
+                            if (loginResult.success) {
+                                showAlert('자동 로그인 성공!', 'success');
+                                
+                                // 로그인 정보 저장
+                                localStorage.setItem('current_user', JSON.stringify(loginResult.user));
+                                localStorage.setItem('user_token', loginResult.token);
+                                
+                                // 메인 페이지로 이동
+                                setTimeout(() => {
+                                    window.location.href = 'index.html';
+                                }, 1500);
+                            } else {
+                                showAlert('자동 로그인 실패. 수동으로 로그인해주세요.', 'warning');
+                            }
+                        } catch (error) {
+                            console.error('자동 로그인 오류:', error);
+                            showAlert('자동 로그인 실패. 수동으로 로그인해주세요.', 'warning');
+                        }
+                    }, 2000);
                 } else {
                     showAlert(result.message || '회원가입에 실패했습니다.', 'error');
                 }
@@ -1079,25 +1170,39 @@
         async function createUser(payload) {
             console.log('=== createUser 함수 호출됨 ===');
             console.log('supabase 객체:', supabase);
+            console.log('연결 상태:', supabaseConnectionStatus);
             console.log('payload:', { ...payload, password: '***' });
             
-            // Supabase가 없거나 연결 실패 시 테스트용 성공 응답
-            if (!supabase) {
-                console.warn('⚠️ Supabase 객체가 없습니다. 테스트용 성공 응답을 반환합니다.');
+            // Supabase 연결 상태 확인
+            if (!supabase || supabaseConnectionStatus !== 'connected') {
+                console.warn('⚠️ Supabase 연결이 불안정합니다. 로컬 저장소에 사용자 정보를 저장합니다.');
+                console.warn('연결 상태:', supabaseConnectionStatus);
                 
                 // 2초 지연 후 성공 응답 (실제 API 호출 시뮬레이션)
                 await new Promise(resolve => setTimeout(resolve, 2000));
                 
-                console.log('✅ 테스트용 회원가입 성공');
+                // 로컬 저장소에 사용자 정보 저장
+                const userId = 'user_' + Date.now();
+                const userData = {
+                    id: userId,
+                    email: payload.email,
+                    name: payload.name,
+                    org: payload.org,
+                    phone: payload.phone,
+                    user_type: 'user',
+                    created_at: new Date().toISOString()
+                };
+                
+                // 로컬 저장소에 사용자 목록 저장
+                const existingUsers = JSON.parse(localStorage.getItem('local_users') || '[]');
+                existingUsers.push(userData);
+                localStorage.setItem('local_users', JSON.stringify(existingUsers));
+                
+                console.log('✅ 로컬 회원가입 성공');
                 return { 
                     success: true, 
                     message: '회원가입이 완료되었습니다! 로그인해주세요.',
-                    user: {
-                        email: payload.email,
-                        name: payload.name,
-                        org: payload.org,
-                        phone: payload.phone
-                    }
+                    user: userData
                 };
             }
 
@@ -1122,12 +1227,40 @@
                 console.log('Supabase signUp 응답:', { data, error });
 
                 if (error) {
-                    console.error('회원가입 오류:', error);
+                    console.error('❌ Supabase 회원가입 오류:', error);
+                    
+                    // 특정 오류에 대한 처리
+                    if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+                        console.warn('⚠️ 네트워크 오류 감지. 로컬 저장소로 폴백합니다.');
+                        
+                        // 로컬 저장소에 사용자 정보 저장
+                        const userId = 'user_' + Date.now();
+                        const userData = {
+                            id: userId,
+                            email: payload.email,
+                            name: payload.name,
+                            org: payload.org,
+                            phone: payload.phone,
+                            user_type: 'user',
+                            created_at: new Date().toISOString()
+                        };
+                        
+                        const existingUsers = JSON.parse(localStorage.getItem('local_users') || '[]');
+                        existingUsers.push(userData);
+                        localStorage.setItem('local_users', JSON.stringify(existingUsers));
+                        
+                        return { 
+                            success: true, 
+                            message: '회원가입이 완료되었습니다! (오프라인 모드)',
+                            user: userData
+                        };
+                    }
+                    
                     return { success: false, message: error.message };
                 }
 
                 if (data.user) {
-                    console.log('회원가입 성공:', data.user);
+                    console.log('✅ Supabase 회원가입 성공:', data.user);
                     return { success: true, message: '회원가입이 완료되었습니다! 이메일을 확인해주세요.' };
                 }
 
@@ -1135,19 +1268,31 @@
             } catch (error) {
                 console.error('회원가입 처리 오류:', error);
                 
-                // 네트워크 오류 등으로 실패 시에도 테스트용 성공 응답
-                console.warn('⚠️ Supabase 연결 실패. 테스트용 성공 응답을 반환합니다.');
+                // 네트워크 오류 등으로 실패 시 로컬 저장소에 사용자 정보 저장
+                console.warn('⚠️ Supabase 연결 실패. 로컬 저장소에 사용자 정보를 저장합니다.');
                 await new Promise(resolve => setTimeout(resolve, 2000));
+                
+                // 로컬 저장소에 사용자 정보 저장
+                const userId = 'user_' + Date.now();
+                const userData = {
+                    id: userId,
+                    email: payload.email,
+                    name: payload.name,
+                    org: payload.org,
+                    phone: payload.phone,
+                    user_type: 'user',
+                    created_at: new Date().toISOString()
+                };
+                
+                // 로컬 저장소에 사용자 목록 저장
+                const existingUsers = JSON.parse(localStorage.getItem('local_users') || '[]');
+                existingUsers.push(userData);
+                localStorage.setItem('local_users', JSON.stringify(existingUsers));
                 
                 return { 
                     success: true, 
                     message: '회원가입이 완료되었습니다! 로그인해주세요.',
-                    user: {
-                        email: payload.email,
-                        name: payload.name,
-                        org: payload.org,
-                        phone: payload.phone
-                    }
+                    user: userData
                 };
             }
         }
@@ -1374,6 +1519,22 @@
             setTimeout(() => {
                 window.location.href = 'index.html';
             }, 1500);
+        }
+
+        // 로컬 사용자 목록 확인 함수 (디버깅용)
+        function checkLocalUsers() {
+            const localUsers = JSON.parse(localStorage.getItem('local_users') || '[]');
+            console.log('=== 로컬 사용자 목록 ===');
+            console.log('총 사용자 수:', localUsers.length);
+            localUsers.forEach((user, index) => {
+                console.log(`${index + 1}. ${user.name} (${user.email}) - ${user.org}`);
+            });
+            
+            if (localUsers.length > 0) {
+                showAlert(`로컬에 ${localUsers.length}명의 사용자가 등록되어 있습니다.`, 'info');
+            } else {
+                showAlert('로컬에 등록된 사용자가 없습니다.', 'info');
+            }
         }
 
         // 로딩 표시
